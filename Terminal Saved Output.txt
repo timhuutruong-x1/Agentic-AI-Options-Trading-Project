@@ -1,0 +1,262 @@
+Last login: Thu Jun 18 17:41:58 on ttys000
+timtruong@Tims-MacBook-Air ~ % psql --version
+
+psql (PostgreSQL) 18.4 (Postgres.app)
+timtruong@Tims-MacBook-Air ~ % createdb options_trading
+timtruong@Tims-MacBook-Air ~ % cd ~/Desktop/Agentic-AI-Options-Trading-Project
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -f schema/01_market_data.sql
+psql -d options_trading -f schema/02_options_chain.sql
+psql -d options_trading -f schema/03_positions.sql
+psql -d options_trading -f schema/04_trades.sql
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+INSERT 0 1
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -c "\dt"
+               List of tables
+ Schema |     Name      | Type  |   Owner   
+--------+---------------+-------+-----------
+ public | market_data   | table | timtruong
+ public | options_chain | table | timtruong
+ public | positions     | table | timtruong
+ public | strategies    | table | timtruong
+ public | trades        | table | timtruong
+(5 rows)
+
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % createdb options_trading
+createdb: error: database creation failed: ERROR:  database "options_trading" already exists
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -f schema/01_market_data.sql
+psql:schema/01_market_data.sql:18: NOTICE:  relation "market_data" already exists, skipping
+CREATE TABLE
+psql:schema/01_market_data.sql:22: NOTICE:  relation "idx_market_data_ticker_date" already exists, skipping
+CREATE INDEX
+psql:schema/01_market_data.sql:26: NOTICE:  relation "uq_market_data_ticker_date" already exists, skipping
+CREATE INDEX
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -f schema/02_options_chain.sql
+psql:schema/02_options_chain.sql:33: NOTICE:  relation "options_chain" already exists, skipping
+CREATE TABLE
+psql:schema/02_options_chain.sql:36: NOTICE:  relation "idx_options_ticker_date" already exists, skipping
+CREATE INDEX
+psql:schema/02_options_chain.sql:39: NOTICE:  relation "idx_options_expiry" already exists, skipping
+CREATE INDEX
+psql:schema/02_options_chain.sql:42: NOTICE:  relation "idx_options_type_strike" already exists, skipping
+CREATE INDEX
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -f schema/03_positions.sql
+psql:schema/03_positions.sql:27: NOTICE:  relation "positions" already exists, skipping
+CREATE TABLE
+psql:schema/03_positions.sql:30: NOTICE:  relation "idx_positions_status" already exists, skipping
+CREATE INDEX
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -f schema/04_trades.sql
+psql:schema/04_trades.sql:32: NOTICE:  relation "trades" already exists, skipping
+CREATE TABLE
+psql:schema/04_trades.sql:34: NOTICE:  relation "idx_trades_strategy" already exists, skipping
+CREATE INDEX
+psql:schema/04_trades.sql:35: NOTICE:  relation "idx_trades_ticker" already exists, skipping
+CREATE INDEX
+psql:schema/04_trades.sql:51: NOTICE:  relation "strategies" already exists, skipping
+CREATE TABLE
+INSERT 0 1
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -c "\dt"
+               List of tables
+ Schema |     Name      | Type  |   Owner   
+--------+---------------+-------+-----------
+ public | market_data   | table | timtruong
+ public | options_chain | table | timtruong
+ public | positions     | table | timtruong
+ public | strategies    | table | timtruong
+ public | trades        | table | timtruong
+(5 rows)
+
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -c "SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name, ordinal_position;"
+  table_name   |    column_name     |        data_type         
+---------------+--------------------+--------------------------
+ market_data   | id                 | integer
+ market_data   | ticker             | character varying
+ market_data   | trade_date         | date
+ market_data   | open_price         | numeric
+ market_data   | high_price         | numeric
+ market_data   | low_price          | numeric
+ market_data   | close_price        | numeric
+ market_data   | volume             | bigint
+ market_data   | vix                | numeric
+ market_data   | created_at         | timestamp with time zone
+ options_chain | id                 | integer
+ options_chain | ticker             | character varying
+ options_chain | snapshot_date      | date
+ options_chain | expiration_date    | date
+ options_chain | strike_price       | numeric
+ options_chain | option_type        | character
+ options_chain | bid                | numeric
+ options_chain | ask                | numeric
+ options_chain | last_price         | numeric
+ options_chain | volume             | integer
+ options_chain | open_interest      | integer
+ options_chain | implied_volatility | numeric
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % l -d options_trading -c "SELECT * FROM strategies;"
+zsh: command not found: l
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -c "SELECT * FROM strategies;"
+ id |       name        |                              description                              | entry_window_start | entry_window_end |                                                                          rules                                                                           | active |          created_at           
+----+-------------------+-----------------------------------------------------------------------+--------------------+------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------+--------+-------------------------------
+  1 | Silver Bullet ICT | ICT Silver Bullet strategy using Fair Value Gaps and liquidity sweeps | 10:00:00           | 11:00:00         | {"notes": "Also valid 14:00-15:00 PM session", "concept": "Fair Value Gap", "session": "AM", "entry_on": "FVG retest", "requires_liquidity_sweep": true} | t      | 2026-06-18 17:42:49.378321-04
+  2 | Silver Bullet ICT | ICT Silver Bullet strategy using Fair Value Gaps and liquidity sweeps | 10:00:00           | 11:00:00         | {"notes": "Also valid 14:00-15:00 PM session", "concept": "Fair Value Gap", "session": "AM", "entry_on": "FVG retest", "requires_liquidity_sweep": true} | t      | 2026-06-18 17:44:29.157153-04
+(2 rows)
+
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % psql -d options_trading -c "DELETE FROM strategies WHERE id = 2;"
+DELETE 1
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % cd ~/Desktop/Agentic-AI-Options-Trading-Project
+open .
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % cd ~/Desktop/Agentic-AI-Options-Trading-Project
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % cp .env.example .env
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % open -a TextEdit .env
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % cat .gitignore
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % cat > .gitignore << 'EOF'
+# Environment & secrets
+.env
+*.env.local
+
+# Data files (never commit raw market data)
+data/
+*.csv
+*.json
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+EOF
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % cat .gitignore
+# Environment & secrets
+.env
+*.env.local
+
+# Data files (never commit raw market data)
+data/
+*.csv
+*.json
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % cat > .gitignore << 'EOF'
+.env
+*.env.local
+data/
+*.csv
+*.json
+__pycache__/
+.venv/
+venv/
+.DS_Store
+*.log
+EOF
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % cat .gitignore
+.env
+*.env.local
+data/
+*.csv
+*.json
+__pycache__/
+.venv/
+venv/
+.DS_Store
+*.log
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project %         nano .env
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % Y
+zsh: command not found: Y
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % Y        
+zsh: command not found: Y
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project % 
+timtruong@Tims-MacBook-Air Agentic-AI-Options-Trading-Project %  nano .env
+
+  UW PICO 5.09                                 File: .env                                 Modified  
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=options_trading
+DB_USER=timtruong
+DB_PASSWORD=
+
+POLYGON_API_KEY= qG0i7fprzkRAEfRUpBICRZGfJjt0DTHc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                      [ Unknown Command: ^S ]                                       
+^G Get Help     ^O WriteOut     ^R Read File    ^Y Prev Pg      ^K Cut Text     ^C Cur Pos      
+^X Exit         ^J Justify      ^W Where is     ^V Next Pg      ^U UnCut Text   ^T To Spell     
