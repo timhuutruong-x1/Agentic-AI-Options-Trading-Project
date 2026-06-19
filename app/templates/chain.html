@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Options Chain — Silver Bullet{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-title">SPY options chain</div>
+  <div class="page-sub">{{ today.strftime('%A, %B %d %Y') }}</div>
+</div>
+<div style="display:flex;gap:12px;margin-bottom:20px;align-items:center">
+  <div style="display:flex;gap:6px">
+    <a href="?type=C{% if selected_expiry %}&expiry={{ selected_expiry }}{% endif %}" class="btn {% if opt_type=='C' %}btn-primary{% endif %}">Calls</a>
+    <a href="?type=P{% if selected_expiry %}&expiry={{ selected_expiry }}{% endif %}" class="btn {% if opt_type=='P' %}btn-primary{% endif %}">Puts</a>
+  </div>
+  <select onchange="window.location='?type={{ opt_type }}&expiry='+this.value" style="max-width:200px">
+    {% for e in expiries %}
+    <option value="{{ e.expiration_date }}" {% if e.expiration_date|string==selected_expiry %}selected{% endif %}>{{ e.expiration_date }}</option>
+    {% endfor %}
+  </select>
+  <span class="text-muted" style="font-size:13px">{{ contracts|length }} contracts</span>
+</div>
+<div class="card" style="padding:0;overflow:hidden">
+  {% if contracts %}
+  <table>
+    <thead>
+      <tr><th>Strike</th><th>Bid</th><th>Ask</th><th>Mid</th><th>Last</th><th>Volume</th><th>Open int.</th><th>IV</th><th>DTE</th></tr>
+    </thead>
+    <tbody>
+    {% for c in contracts %}
+    <tr {% if c.volume and c.volume>100000 %}style="background:rgba(29,158,117,0.05)"{% endif %}>
+      <td><strong>${{ c.strike_price }}</strong></td>
+      <td>${{ c.bid }}</td>
+      <td>${{ c.ask }}</td>
+      <td class="text-amber">${{ c.mid_price }}</td>
+      <td>${{ c.last_price }}</td>
+      <td class="{% if c.volume and c.volume>100000 %}text-green{% endif %}">{{ "{:,}".format(c.volume) if c.volume else '—' }}</td>
+      <td>{{ "{:,}".format(c.open_interest) if c.open_interest else '—' }}</td>
+      <td>{{ "%.1f"|format(c.implied_volatility*100) if c.implied_volatility else '—' }}%</td>
+      <td>{{ c.days_to_expiry }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state" style="padding:48px">
+    <div class="empty-state-title">No contracts found</div>
+    <p>Try refreshing data from the Briefing page</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

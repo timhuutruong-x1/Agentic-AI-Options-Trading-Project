@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Morning Briefing — Silver Bullet{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+  <div>
+    <div class="page-title">Morning briefing</div>
+    <div class="page-sub">{{ today.strftime('%A, %B %d %Y') }} · Entry window 10:00–11:00am EST</div>
+  </div>
+  <form method="POST" action="/refresh">
+    <button type="submit" class="btn btn-primary">Refresh data</button>
+  </form>
+</div>
+{% if mood %}
+<div class="alert alert-{{ mood[2] }}"><strong>Market mood: {{ mood[0] }}</strong> · {{ mood[1] }}{% if iv %} · Avg IV {{ iv }}%{% endif %}</div>
+{% endif %}
+{% if battleground %}
+<div style="text-align:center;padding:32px 0">
+  <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Battleground level</div>
+  <div style="font-size:64px;font-weight:700;letter-spacing:-2px;color:var(--amber);font-variant-numeric:tabular-nums">${{ battleground }}</div>
+  <div style="font-size:13px;color:var(--muted);margin-top:8px">Watch this level 10–11am on Webull</div>
+</div>
+<div class="grid2">
+  <div class="card">
+    <div class="card-title">Call strikes (resistance above)</div>
+    {% for r in top_calls %}
+    <div class="level-row">
+      <div><span class="badge badge-call">CALL</span> &nbsp;<span class="level-price">${{ r.strike_price }}</span> <span class="text-muted" style="font-size:12px">IV {{ "%.1f"|format(r.implied_volatility*100) }}%</span></div>
+      <div class="text-right"><div class="level-vol">{{ "{:,}".format(r.volume) }} vol</div><div style="font-size:12px;color:var(--hint)">${{ r.bid }}/${{ r.ask }}</div></div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="card">
+    <div class="card-title">Put strikes (support below)</div>
+    {% for r in top_puts %}
+    <div class="level-row">
+      <div><span class="badge badge-put">PUT</span> &nbsp;<span class="level-price">${{ r.strike_price }}</span> <span class="text-muted" style="font-size:12px">IV {{ "%.1f"|format(r.implied_volatility*100) }}%</span></div>
+      <div class="text-right"><div class="level-vol">{{ "{:,}".format(r.volume) }} vol</div><div style="font-size:12px;color:var(--hint)">${{ r.bid }}/${{ r.ask }}</div></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<div class="card">
+  <div class="card-title">Silver Bullet setups to watch</div>
+  <div class="grid2" style="margin-bottom:0">
+    <div class="setup-box">
+      <div class="setup-label long">Long setup</div>
+      <div class="setup-text">SPY sweeps below <strong>${{ top_puts[0].strike_price }}</strong> then reverses up<br>Enter long on FVG retest → target <strong>${{ top_calls[0].strike_price }}</strong></div>
+    </div>
+    <div class="setup-box">
+      <div class="setup-label short">Short setup</div>
+      <div class="setup-text">SPY sweeps above <strong>${{ top_calls[0].strike_price }}</strong> then reverses down<br>Enter short on FVG retest → target <strong>${{ top_puts[0].strike_price }}</strong></div>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-title">Reminders</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    {% for r in ["Paper trade only — 20+ setups before real money","Entry window is 10:00–11:00am EST only","Wait for liquidity sweep FIRST then the FVG","No setup = no trade. Patience wins."] %}
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--muted);border:0.5px solid var(--border)">{{ r }}</div>
+    {% endfor %}
+  </div>
+  <a href="/journal/add" class="btn btn-full" style="margin-top:16px">Log today's observation →</a>
+</div>
+{% else %}
+<div class="empty-state" style="padding:80px 24px">
+  <div class="empty-state-title">No data for today yet</div>
+  <p style="margin-bottom:20px">Click Refresh Data to pull today's SPY options chain</p>
+  <form method="POST" action="/refresh"><button type="submit" class="btn btn-primary">Refresh data now</button></form>
+</div>
+{% endif %}
+{% endblock %}

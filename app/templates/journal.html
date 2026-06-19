@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Journal — Silver Bullet{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+  <div>
+    <div class="page-title">Trade journal</div>
+    <div class="page-sub">Log what you see each morning — pattern recognition takes time</div>
+  </div>
+  <a href="/journal/add" class="btn btn-primary">Log today →</a>
+</div>
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Sessions logged</div>
+    <div class="metric-value">{{ stats.total or 0 }}</div>
+    <div class="metric-sub">goal: 20 before live trading</div>
+    <div class="progress"><div class="progress-bar" style="width:{{ [((stats.total or 0)/20*100)|int,100]|min }}%"></div></div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Sweeps seen</div>
+    <div class="metric-value">{{ stats.sweeps or 0 }}</div>
+    <div class="metric-sub">{% if stats.total and stats.total>0 %}{{ ((stats.sweeps or 0)/stats.total*100)|int }}% of sessions{% else %}—{% endif %}</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Win rate</div>
+    {% if stats.trades and stats.trades>0 %}
+    <div class="metric-value text-green">{{ ((stats.wins or 0)/stats.trades*100)|int }}%</div>
+    <div class="metric-sub">{{ stats.wins or 0 }} wins / {{ stats.trades }} trades</div>
+    {% else %}
+    <div class="metric-value text-muted">—</div>
+    <div class="metric-sub">no paper trades yet</div>
+    {% endif %}
+  </div>
+  <div class="metric">
+    <div class="metric-label">Paper P&L</div>
+    {% if stats.total_pnl %}
+    <div class="metric-value {% if stats.total_pnl>0 %}text-green{% elif stats.total_pnl<0 %}text-red{% endif %}">{{ "%+.2f"|format(stats.total_pnl) }}</div>
+    {% else %}<div class="metric-value text-muted">—</div>{% endif %}
+    <div class="metric-sub">total points</div>
+  </div>
+</div>
+<div class="card">
+  {% if entries %}
+  <table>
+    <thead><tr><th>Date</th><th>Levels</th><th>Sweep</th><th>FVG</th><th>Trade</th><th>Result</th><th>P&L</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    {% for e in entries %}
+    <tr>
+      <td style="white-space:nowrap">{{ e.journal_date }}</td>
+      <td>{% if e.call_level %}<span class="badge badge-call">${{ e.call_level }}</span>{% endif %} {% if e.put_level %}<span class="badge badge-put">${{ e.put_level }}</span>{% endif %}</td>
+      <td>{% if e.sweep_occurred %}<span class="dot dot-green"></span> Yes{% if e.sweep_direction %} <span class="text-muted">{{ e.sweep_direction }}</span>{% endif %}{% else %}<span class="dot dot-gray"></span> No{% endif %}</td>
+      <td>{% if e.fvg_formed %}<span class="dot dot-green"></span> Yes{% if e.fvg_low and e.fvg_high %} <span class="text-muted">${{ e.fvg_low }}–${{ e.fvg_high }}</span>{% endif %}{% else %}<span class="dot dot-gray"></span> No{% endif %}</td>
+      <td>{% if e.would_trade %}<span class="{% if e.trade_direction=='long' %}text-green{% else %}text-red{% endif %}">{{ e.trade_direction or '—' }}</span>{% else %}<span class="text-muted">Observed</span>{% endif %}</td>
+      <td>{% if e.result=='win' %}<span class="badge badge-win">Win</span>{% elif e.result=='loss' %}<span class="badge badge-loss">Loss</span>{% elif e.result %}<span class="badge badge-neutral">{{ e.result }}</span>{% else %}—{% endif %}</td>
+      <td class="{% if e.pnl_points and e.pnl_points>0 %}text-green{% elif e.pnl_points and e.pnl_points<0 %}text-red{% endif %}">{% if e.pnl_points %}{{ "%+.2f"|format(e.pnl_points) }}{% else %}—{% endif %}</td>
+      <td class="text-muted" style="max-width:200px">{{ (e.notes or '')[:50] }}{% if e.notes and e.notes|length>50 %}…{% endif %}</td>
+      <td><form method="POST" action="/journal/delete/{{ e.id }}" onsubmit="return confirm('Delete this entry?')"><button type="submit" class="btn btn-sm btn-danger">Delete</button></form></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-title">No entries yet</div>
+    <p style="margin-bottom:20px">Start logging tomorrow morning after watching SPY 10–11am</p>
+    <a href="/journal/add" class="btn btn-primary">Log first observation →</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

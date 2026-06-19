@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Confluence — Silver Bullet{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+  <div><div class="page-title">Confluence chart</div><div class="page-sub">SPY · {{ today }} · ICT Silver Bullet indicators</div></div>
+  <div style="display:flex;gap:8px">
+    <a href="?tf=1m" class="btn {% if tf=='1m' %}btn-primary{% endif %}">1m</a>
+    <a href="?tf=5m" class="btn {% if tf=='5m' %}btn-primary{% endif %}">5m</a>
+  </div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center">
+  <span style="font-size:12px;color:var(--muted);margin-right:4px">Show:</span>
+  <button class="filter-btn active" id="btn-fvg" onclick="toggleLayer('fvg')">
+    <span style="width:10px;height:10px;background:rgba(29,158,117,0.4);border:1px solid #1D9E75;border-radius:2px;display:inline-block"></span> FVG zones
+  </button>
+  <button class="filter-btn active" id="btn-sweep" onclick="toggleLayer('sweep')">
+    <span style="color:#D85A30;font-size:12px">▼</span> Sweeps
+  </button>
+  <button class="filter-btn active" id="btn-bos" onclick="toggleLayer('bos')">
+    <span style="width:8px;height:8px;border-radius:50%;background:#1D9E75;display:inline-block"></span> BOS
+  </button>
+  <button class="filter-btn active" id="btn-battle" onclick="toggleLayer('battle')">
+    <span style="width:12px;height:2px;background:#EF9F27;display:inline-block"></span> Battleground
+  </button>
+  <div style="margin-left:auto;font-size:12px;color:var(--muted)">
+    {% if battleground %}Battleground: <strong style="color:var(--amber-text)">${{ battleground }}</strong>{% endif %}
+    &nbsp;·&nbsp; {{ fvg_count }} FVGs ({{ bull_fvg }} bull · {{ bear_fvg }} bear)
+  </div>
+</div>
+
+{% if candles != '[]' %}
+<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
+  <div id="chart" style="width:100%;height:520px"></div>
+</div>
+
+<div class="grid3">
+  <div class="card"><div class="card-title">FVGs detected</div><div class="metric-value">{{ fvg_count }}</div><div class="metric-sub">{{ bull_fvg }} bullish · {{ bear_fvg }} bearish</div></div>
+  <div class="card"><div class="card-title">Battleground</div><div class="metric-value text-amber">${{ battleground or '--' }}</div><div class="metric-sub">Watch for sweeps 10-11am</div></div>
+  <div class="card"><div class="card-title">Entry window</div><div class="metric-value" style="font-size:18px">10:00-11:00am</div><div class="metric-sub">EST · AM session only</div></div>
+</div>
+
+<div class="card">
+  <div class="card-title">How to read this chart</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="setup-box"><div class="setup-label long">Step 1 - Liquidity sweep</div><div class="setup-text">Price spikes through a level then immediately reverses. The market is hunting stops.</div></div>
+    <div class="setup-box"><div class="setup-label long">Step 2 - FVG forms</div><div class="setup-text">After the sweep a 3-candle gap appears (dotted lines). This is your entry zone on the retest.</div></div>
+    <div class="setup-box"><div class="setup-label short">Step 3 - Break of structure</div><div class="setup-text">Price closes above a swing high or below a swing low confirming the direction.</div></div>
+    <div class="setup-box"><div class="setup-label short">Step 4 - Enter on retest</div><div class="setup-text">Wait for price to pull back into the FVG zone. Stop below/above FVG. Target opposite liquidity.</div></div>
+  </div>
+</div>
+{% else %}
+<div class="empty-state" style="padding:80px 24px">
+  <div class="empty-state-title">No intraday data yet</div>
+  <p style="margin-bottom:20px">Markets may be closed. Try again during market hours 9:30am-4pm EST.</p>
+  <a href="/confluence" class="btn btn-primary">Reload chart</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+.filter-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg3);color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.15s;font-family:inherit}
+.filter-btn.active{border-color:rgba(255,255,255,0.25);color:var(--text);background:var(--bg2)}
+.filter-btn:hover{border-color:rgba(255,255,255,0.2)}
+</style>
+{% if candles != '[]' %}
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+const candles = {{ candles|safe }};
+const fvgs    = {{ fvgs|safe }};
+const markers = {{ markers|safe }};
+const bg      = {{ battleground or 'null' }};
+
+const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+  width: document.getElementById('chart').offsetWidth, height: 520,
+  layout: { background: { color: '#0d0d0f' }, textColor: '#888680' },
+  grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
+  crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+  rightPriceScale: { borderColor: 'rgba(255,255,255,0.08)' },
+  timeScale: { borderColor: 'rgba(255,255,255,0.08)', timeVisible: true, secondsVisible: false },
+});
+
+const cs = chart.addCandlestickSeries({
+  upColor: '#1D9E75', downColor: '#D85A30',
+  borderUpColor: '#1D9E75', borderDownColor: '#D85A30',
+  wickUpColor: '#3ecfa0', wickDownColor: '#f07a56',
+});
+cs.setData(candles);
+
+const state = { fvg: true, sweep: true, bos: true, battle: true };
+const fvgLines = [];
+let battleLine = null;
+
+function buildMarkers() {
+  let m = [];
+  if (state.sweep) m = m.concat(markers.filter(x => x.text === 'Sweep'));
+  if (state.bos)   m = m.concat(markers.filter(x => x.text === 'BOS'));
+  m.sort((a,b) => a.time - b.time);
+  cs.setMarkers(m);
+}
+
+function buildFVGs() {
+  fvgLines.forEach(l => { try { cs.removePriceLine(l); } catch(e){} });
+  fvgLines.length = 0;
+  if (!state.fvg) return;
+  fvgs.forEach(f => {
+    const col = f.type === 'bullish' ? '#1D9E75' : '#D85A30';
+    fvgLines.push(cs.createPriceLine({ price: f.top,    color: col, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false, title: 'FVG' }));
+    fvgLines.push(cs.createPriceLine({ price: f.bottom, color: col, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false, title: 'FVG' }));
+  });
+}
+
+function buildBattle() {
+  if (battleLine) { try { cs.removePriceLine(battleLine); } catch(e){} battleLine = null; }
+  if (state.battle && bg) {
+    battleLine = cs.createPriceLine({ price: bg, color: '#EF9F27', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'Battleground' });
+  }
+}
+
+function toggleLayer(layer) {
+  state[layer] = !state[layer];
+  const btn = document.getElementById('btn-' + layer);
+  btn.classList.toggle('active', state[layer]);
+  if (layer === 'fvg') buildFVGs();
+  else if (layer === 'battle') buildBattle();
+  else buildMarkers();
+}
+
+buildFVGs();
+buildBattle();
+buildMarkers();
+chart.timeScale().fitContent();
+window.addEventListener('resize', () => chart.resize(document.getElementById('chart').offsetWidth, 520));
+</script>
+{% endif %}
+{% endblock %}

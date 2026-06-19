@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Log Observation — Silver Bullet{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Log observation</div>
+  <div class="page-sub">Fill in what you saw during the 10–11am window</div>
+</div>
+<form method="POST" action="/journal/add" style="max-width:640px">
+  <div class="card">
+    <div class="card-title">Session details</div>
+    <div class="grid2">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" name="journal_date" value="{{ today }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Call level (resistance)</label>
+        <input type="number" name="call_level" placeholder="e.g. 747.00" step="0.01">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Put level (support)</label>
+      <input type="number" name="put_level" placeholder="e.g. 746.00" step="0.01">
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Liquidity sweep</div>
+    <div class="form-group">
+      <label class="form-label">Did a sweep occur 10–11am?</label>
+      <div class="radio-group">
+        <div class="radio-btn"><input type="radio" name="sweep" id="sweep-yes" value="yes"><label for="sweep-yes">Yes</label></div>
+        <div class="radio-btn"><input type="radio" name="sweep" id="sweep-no" value="no" checked><label for="sweep-no">No</label></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="form-group">
+        <label class="form-label">Direction (optional)</label>
+        <select name="sweep_direction">
+          <option value="">—</option>
+          <option value="above">Above call level</option>
+          <option value="below">Below put level</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sweep price (optional)</label>
+        <input type="number" name="sweep_price" placeholder="e.g. 745.80" step="0.01">
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Fair Value Gap</div>
+    <div class="form-group">
+      <label class="form-label">Did an FVG form after the sweep?</label>
+      <div class="radio-group">
+        <div class="radio-btn"><input type="radio" name="fvg" id="fvg-yes" value="yes"><label for="fvg-yes">Yes</label></div>
+        <div class="radio-btn"><input type="radio" name="fvg" id="fvg-no" value="no" checked><label for="fvg-no">No</label></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="form-group">
+        <label class="form-label">FVG low (optional)</label>
+        <input type="number" name="fvg_low" placeholder="e.g. 746.20" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">FVG high (optional)</label>
+        <input type="number" name="fvg_high" placeholder="e.g. 746.60" step="0.01">
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Paper trade (optional)</div>
+    <div class="form-group">
+      <label class="form-label">Would you have taken this trade?</label>
+      <div class="radio-group">
+        <div class="radio-btn"><input type="radio" name="would_trade" id="trade-yes" value="yes"><label for="trade-yes">Yes</label></div>
+        <div class="radio-btn"><input type="radio" name="would_trade" id="trade-no" value="no" checked><label for="trade-no">No</label></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Direction</label>
+      <div class="radio-group">
+        <div class="radio-btn"><input type="radio" name="trade_direction" id="dir-long" value="long"><label for="dir-long">Long</label></div>
+        <div class="radio-btn"><input type="radio" name="trade_direction" id="dir-short" value="short"><label for="dir-short">Short</label></div>
+        <div class="radio-btn"><input type="radio" name="trade_direction" id="dir-none" value="" checked><label for="dir-none">—</label></div>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="form-group">
+        <label class="form-label">Entry price</label>
+        <input type="number" name="entry_price" placeholder="746.30" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target price</label>
+        <input type="number" name="target_price" placeholder="747.00" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stop price</label>
+        <input type="number" name="stop_price" placeholder="745.90" step="0.01">
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="form-group">
+        <label class="form-label">Result</label>
+        <select name="result">
+          <option value="">—</option>
+          <option value="win">Win</option>
+          <option value="loss">Loss</option>
+          <option value="breakeven">Breakeven</option>
+          <option value="no trade">No trade</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">P&L in points</label>
+        <input type="number" name="pnl_points" placeholder="0.70 or -0.40" step="0.01">
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Notes</div>
+    <div class="form-group">
+      <textarea name="notes" placeholder="What did you observe? How did price behave?"></textarea>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button type="submit" class="btn btn-primary" style="flex:1">Save observation</button>
+    <a href="/journal" class="btn" style="flex:1;justify-content:center">Cancel</a>
+  </div>
+</form>
+{% endblock %}

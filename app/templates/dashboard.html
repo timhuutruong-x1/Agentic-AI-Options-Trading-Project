@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Silver Bullet{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+  <div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">{{ today.strftime('%A, %B %d %Y') }} · SPY Silver Bullet</div>
+  </div>
+</div>
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Battleground</div>
+    <div class="metric-value text-amber">${{ battleground or '—' }}</div>
+    <div class="metric-sub">SPY key level today</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Sessions logged</div>
+    <div class="metric-value">{{ stats.total or 0 }}</div>
+    <div class="metric-sub">{{ 20 - (stats.total or 0) }} more before live trading</div>
+    <div class="progress"><div class="progress-bar" style="width:{{ [((stats.total or 0)/20*100)|int,100]|min }}%"></div></div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Paper win rate</div>
+    {% if stats.trades and stats.trades > 0 %}
+    <div class="metric-value text-green">{{ ((stats.wins or 0)/stats.trades*100)|int }}%</div>
+    <div class="metric-sub">{{ stats.wins or 0 }} of {{ stats.trades }} trades</div>
+    {% else %}
+    <div class="metric-value text-muted">—</div>
+    <div class="metric-sub">log more sessions</div>
+    {% endif %}
+  </div>
+  <div class="metric">
+    <div class="metric-label">Contracts in DB</div>
+    <div class="metric-value">{{ "{:,}".format(contract_count) }}</div>
+    <div class="metric-sub">last fetch: {{ last_fetch or 'never' }}</div>
+  </div>
+</div>
+<div class="grid2">
+  <div class="card">
+    <div class="card-title">Key levels today</div>
+    {% if battleground %}
+    <div class="battle-box">
+      <div class="battle-label">Battleground</div>
+      <div class="battle-value">${{ battleground }}</div>
+    </div>
+    <div class="card-title">Top calls (resistance)</div>
+    {% for r in top_calls %}
+    <div class="level-row">
+      <span><span class="badge badge-call">CALL</span> &nbsp;<span class="level-price">${{ r.strike_price }}</span></span>
+      <span class="level-vol">{{ "{:,}".format(r.volume) }} vol</span>
+    </div>
+    {% endfor %}
+    <hr class="divider">
+    <div class="card-title">Top puts (support)</div>
+    {% for r in top_puts %}
+    <div class="level-row">
+      <span><span class="badge badge-put">PUT</span> &nbsp;<span class="level-price">${{ r.strike_price }}</span></span>
+      <span class="level-vol">{{ "{:,}".format(r.volume) }} vol</span>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-title">No data for today</div>
+      <p>Click Refresh on the Briefing page</p>
+    </div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-title">Silver Bullet setup — 10–11am EST</div>
+    {% if battleground and top_calls and top_puts %}
+    <div class="setup-box">
+      <div class="setup-label long">Long setup</div>
+      <div class="setup-text">SPY sweeps below <strong>${{ top_puts[0].strike_price }}</strong> then reverses up — enter long, target <strong>${{ top_calls[0].strike_price }}</strong></div>
+    </div>
+    <div class="setup-box">
+      <div class="setup-label short">Short setup</div>
+      <div class="setup-text">SPY sweeps above <strong>${{ top_calls[0].strike_price }}</strong> then reverses down — enter short, target <strong>${{ top_puts[0].strike_price }}</strong></div>
+    </div>
+    <div class="alert alert-info" style="margin-top:12px">Entry window is <strong>10:00–11:00am EST only.</strong></div>
+    {% else %}
+    <div class="empty-state"><div class="empty-state-title">No setup available</div><p>Refresh data on the Briefing page first</p></div>
+    {% endif %}
+    <a href="/briefing" class="btn btn-full">Go to morning briefing →</a>
+    <a href="/journal/add" class="btn btn-full" style="margin-top:8px">Log today's observation →</a>
+  </div>
+</div>
+<div class="card">
+  <div class="card-title">Recent journal entries</div>
+  {% if recent_journal %}
+  <table>
+    <thead><tr><th>Date</th><th>Sweep</th><th>FVG</th><th>Result</th><th>P&L</th><th>Notes</th></tr></thead>
+    <tbody>
+    {% for e in recent_journal %}
+    <tr>
+      <td>{{ e.journal_date }}</td>
+      <td>{% if e.sweep_occurred %}<span class="dot dot-green"></span> Yes{% else %}<span class="dot dot-gray"></span> No{% endif %}</td>
+      <td>{% if e.fvg_formed %}<span class="dot dot-green"></span> Yes{% else %}<span class="dot dot-gray"></span> No{% endif %}</td>
+      <td>{% if e.result=='win' %}<span class="badge badge-win">Win</span>{% elif e.result=='loss' %}<span class="badge badge-loss">Loss</span>{% elif e.result %}<span class="badge badge-neutral">{{ e.result }}</span>{% else %}—{% endif %}</td>
+      <td class="{% if e.pnl_points and e.pnl_points>0 %}text-green{% elif e.pnl_points and e.pnl_points<0 %}text-red{% endif %}">{% if e.pnl_points %}{{ "%+.2f"|format(e.pnl_points) }}{% else %}—{% endif %}</td>
+      <td class="text-muted">{{ (e.notes or '')[:60] }}{% if e.notes and e.notes|length>60 %}…{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state"><div class="empty-state-title">No journal entries yet</div><p>Watch SPY tomorrow 10–11am and log what you see</p></div>
+  {% endif %}
+  <a href="/journal" class="btn btn-full">View full journal →</a>
+</div>
+{% endblock %}
