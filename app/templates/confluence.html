@@ -8,43 +8,32 @@
     <a href="?tf=5m" class="btn {% if tf=='5m' %}btn-primary{% endif %}">5m</a>
   </div>
 </div>
-
 <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center">
   <span style="font-size:12px;color:var(--muted);margin-right:4px">Show:</span>
-  <button class="filter-btn active" id="btn-fvg" onclick="toggleLayer('fvg')">
-    <span style="width:10px;height:10px;background:rgba(29,158,117,0.4);border:1px solid #1D9E75;border-radius:2px;display:inline-block"></span> FVG zones
-  </button>
-  <button class="filter-btn active" id="btn-sweep" onclick="toggleLayer('sweep')">
-    <span style="color:#D85A30;font-size:12px">▼</span> Sweeps
-  </button>
-  <button class="filter-btn active" id="btn-bos" onclick="toggleLayer('bos')">
-    <span style="width:8px;height:8px;border-radius:50%;background:#1D9E75;display:inline-block"></span> BOS
-  </button>
-  <button class="filter-btn active" id="btn-battle" onclick="toggleLayer('battle')">
-    <span style="width:12px;height:2px;background:#EF9F27;display:inline-block"></span> Battleground
-  </button>
+  <button class="filter-btn active" id="btn-fvg" onclick="toggleLayer('fvg')"><span style="width:10px;height:10px;background:rgba(29,158,117,0.4);border:1px solid #1D9E75;border-radius:2px;display:inline-block"></span> FVG zones</button>
+  <button class="filter-btn active" id="btn-sweep" onclick="toggleLayer('sweep')"><span style="color:#D85A30;font-size:12px">▼</span> Sweeps</button>
+  <button class="filter-btn active" id="btn-bos" onclick="toggleLayer('bos')"><span style="width:8px;height:8px;border-radius:50%;background:#1D9E75;display:inline-block"></span> BOS</button>
+  <button class="filter-btn active" id="btn-battle" onclick="toggleLayer('battle')"><span style="width:12px;height:2px;background:#EF9F27;display:inline-block"></span> Battleground</button>
   <div style="margin-left:auto;font-size:12px;color:var(--muted)">
     {% if battleground %}Battleground: <strong style="color:var(--amber-text)">${{ battleground }}</strong>{% endif %}
     &nbsp;·&nbsp; {{ fvg_count }} FVGs ({{ bull_fvg }} bull · {{ bear_fvg }} bear)
   </div>
 </div>
-
 {% if candles != '[]' %}
-<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
+<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;position:relative">
   <div id="chart" style="width:100%;height:520px"></div>
+  <canvas id="fvg-overlay" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
 </div>
-
 <div class="grid3">
   <div class="card"><div class="card-title">FVGs detected</div><div class="metric-value">{{ fvg_count }}</div><div class="metric-sub">{{ bull_fvg }} bullish · {{ bear_fvg }} bearish</div></div>
   <div class="card"><div class="card-title">Battleground</div><div class="metric-value text-amber">${{ battleground or '--' }}</div><div class="metric-sub">Watch for sweeps 10-11am</div></div>
   <div class="card"><div class="card-title">Entry window</div><div class="metric-value" style="font-size:18px">10:00-11:00am</div><div class="metric-sub">EST · AM session only</div></div>
 </div>
-
 <div class="card">
   <div class="card-title">How to read this chart</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div class="setup-box"><div class="setup-label long">Step 1 - Liquidity sweep</div><div class="setup-text">Price spikes through a level then immediately reverses. The market is hunting stops.</div></div>
-    <div class="setup-box"><div class="setup-label long">Step 2 - FVG forms</div><div class="setup-text">After the sweep a 3-candle gap appears (dotted lines). This is your entry zone on the retest.</div></div>
+    <div class="setup-box"><div class="setup-label long">Step 2 - FVG forms</div><div class="setup-text">After the sweep a highlighted zone appears. This is your entry area on the retest.</div></div>
     <div class="setup-box"><div class="setup-label short">Step 3 - Break of structure</div><div class="setup-text">Price closes above a swing high or below a swing low confirming the direction.</div></div>
     <div class="setup-box"><div class="setup-label short">Step 4 - Enter on retest</div><div class="setup-text">Wait for price to pull back into the FVG zone. Stop below/above FVG. Target opposite liquidity.</div></div>
   </div>
@@ -57,12 +46,10 @@
 </div>
 {% endif %}
 {% endblock %}
-
 {% block scripts %}
 <style>
 .filter-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg3);color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.15s;font-family:inherit}
 .filter-btn.active{border-color:rgba(255,255,255,0.25);color:var(--text);background:var(--bg2)}
-.filter-btn:hover{border-color:rgba(255,255,255,0.2)}
 </style>
 {% if candles != '[]' %}
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
@@ -71,9 +58,14 @@ const candles = {{ candles|safe }};
 const fvgs    = {{ fvgs|safe }};
 const markers = {{ markers|safe }};
 const bg      = {{ battleground or 'null' }};
+const state   = { fvg:true, sweep:true, bos:true, battle:true };
 
-const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-  width: document.getElementById('chart').offsetWidth, height: 520,
+const chartEl   = document.getElementById('chart');
+const overlayEl = document.getElementById('fvg-overlay');
+const ctx       = overlayEl.getContext('2d');
+
+const chart = LightweightCharts.createChart(chartEl, {
+  width: chartEl.offsetWidth, height: 520,
   layout: { background: { color: '#0d0d0f' }, textColor: '#888680' },
   grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
   crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
@@ -88,8 +80,6 @@ const cs = chart.addCandlestickSeries({
 });
 cs.setData(candles);
 
-const state = { fvg: true, sweep: true, bos: true, battle: true };
-const fvgLines = [];
 let battleLine = null;
 
 function buildMarkers() {
@@ -100,17 +90,6 @@ function buildMarkers() {
   cs.setMarkers(m);
 }
 
-function buildFVGs() {
-  fvgLines.forEach(l => { try { cs.removePriceLine(l); } catch(e){} });
-  fvgLines.length = 0;
-  if (!state.fvg) return;
-  fvgs.forEach(f => {
-    const col = f.type === 'bullish' ? '#1D9E75' : '#D85A30';
-    fvgLines.push(cs.createPriceLine({ price: f.top,    color: col, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false, title: 'FVG' }));
-    fvgLines.push(cs.createPriceLine({ price: f.bottom, color: col, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false, title: 'FVG' }));
-  });
-}
-
 function buildBattle() {
   if (battleLine) { try { cs.removePriceLine(battleLine); } catch(e){} battleLine = null; }
   if (state.battle && bg) {
@@ -118,20 +97,66 @@ function buildBattle() {
   }
 }
 
+function drawFVGOverlay() {
+  const w = chartEl.offsetWidth;
+  const h = 520;
+  overlayEl.width  = w;
+  overlayEl.height = h;
+  ctx.clearRect(0, 0, w, h);
+  if (!state.fvg || !fvgs.length) return;
+
+  const priceToY = (price) => {
+    try { return cs.priceToCoordinate(price); } catch(e) { return null; }
+  };
+  const timeToX = (time) => {
+    try { return chart.timeScale().timeToCoordinate(time); } catch(e) { return null; }
+  };
+
+  fvgs.forEach(f => {
+    const x1 = timeToX(f.time);
+    const x2 = w - 60;
+    const y1 = priceToY(f.top);
+    const y2 = priceToY(f.bottom);
+    if (x1 === null || y1 === null || y2 === null) return;
+    const isBull = f.type === 'bullish';
+    ctx.fillStyle = isBull ? 'rgba(29,158,117,0.15)' : 'rgba(216,90,48,0.15)';
+    ctx.strokeStyle = isBull ? '#1D9E75' : '#D85A30';
+    ctx.lineWidth = 0.5;
+    const rectX = Math.max(0, x1);
+    const rectY = Math.min(y1, y2);
+    const rectW = x2 - rectX;
+    const rectH = Math.abs(y2 - y1);
+    if (rectW > 0 && rectH > 0) {
+      ctx.fillRect(rectX, rectY, rectW, rectH);
+      ctx.strokeRect(rectX, rectY, rectW, rectH);
+      ctx.fillStyle = isBull ? '#3ecfa0' : '#f07a56';
+      ctx.font = '10px -apple-system, sans-serif';
+      ctx.fillText(isBull ? 'Bull FVG' : 'Bear FVG', rectX + 4, rectY + 12);
+    }
+  });
+}
+
 function toggleLayer(layer) {
   state[layer] = !state[layer];
-  const btn = document.getElementById('btn-' + layer);
-  btn.classList.toggle('active', state[layer]);
-  if (layer === 'fvg') buildFVGs();
+  document.getElementById('btn-'+layer).classList.toggle('active', state[layer]);
+  if (layer === 'fvg') drawFVGOverlay();
   else if (layer === 'battle') buildBattle();
   else buildMarkers();
 }
 
-buildFVGs();
+chart.subscribeCrosshairMove(drawFVGOverlay);
+chart.timeScale().subscribeVisibleTimeRangeChange(drawFVGOverlay);
+
 buildBattle();
 buildMarkers();
 chart.timeScale().fitContent();
-window.addEventListener('resize', () => chart.resize(document.getElementById('chart').offsetWidth, 520));
+setTimeout(drawFVGOverlay, 300);
+
+function onResize() {
+  chart.resize(chartEl.offsetWidth, 520);
+  drawFVGOverlay();
+}
+window.addEventListener('resize', onResize);
 </script>
 {% endif %}
 {% endblock %}
